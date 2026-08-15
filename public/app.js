@@ -4,11 +4,12 @@ let state = {
   user: JSON.parse(localStorage.getItem("sdm_user") || "null"),
   screen: "login",
   stages: [],
+  docTypes: [],
   customers: [],
   activeCustomer: null,
   documents: [],
   timeline: [],
-  loading: false,
+  pendingUpload: null, // { fileName, base64 } waiting for a type before it's sent
 };
 
 function toast(msg) {
@@ -48,6 +49,7 @@ async function boot() {
     try {
       state.user = await api("/api/me");
       state.stages = await api("/api/stages");
+      state.docTypes = await api("/api/document-types");
       state.screen = "dashboard";
     } catch (e) {
       logout();
@@ -73,6 +75,7 @@ async function doLogin(mobile, password, errEl) {
     localStorage.setItem("sdm_token", data.token);
     localStorage.setItem("sdm_user", JSON.stringify(data.user));
     state.stages = await api("/api/stages");
+    state.docTypes = await api("/api/document-types");
     goTo("dashboard");
   } catch (e) {
     errEl.textContent = e.message;
@@ -81,6 +84,7 @@ async function doLogin(mobile, password, errEl) {
 
 async function goTo(screen, custId) {
   state.screen = screen;
+  state.pendingUpload = null;
   try {
     if (screen === "dashboard") {
       state.stats = await api("/api/stats");
@@ -98,29 +102,81 @@ async function goTo(screen, custId) {
   render();
 }
 
-async function handleUpload(fileInput) {
+// ---------- Add Customer ----------
+async function submitAddCustomer(form) {
+  const body = {
+    name: form.name.value.trim(), mobile: form.mobile.value.trim(), email: form.email.value.trim(),
+    address: form.address.value.trim(), consumerNo: form.consumerNo.value.trim(),
+    capacity: form.capacity.value.trim(), type: form.type.value,
+  };
+  if (!body.name || !body.mobile) { toast("Name and mobile are required"); return; }
+  try {
+    const c = await api("/api/customers", { method: "POST", body: JSON.stringify(body) });
+    toast("Customer added");
+    goTo("details", c.id);
+  } catch (e) { toast(e.message); }
+}
+
+// ---------- Document upload: pick file (camera or gallery), then pick type, then send ----------
+function pickFile(inputId) {
+  document.getElementById(inputId).click();
+}
+
+function stageFileForUpload(fileInput) {
   const file = fileInput.files[0];
   if (!file || !state.activeCustomer) return;
   const reader = new FileReader();
-  reader.onload = async () => {
-    const base64 = reader.result.split(",")[1];
-    try {
-      const doc = await api(`/api/customers/${state.activeCustomer.id}/documents`, {
-        method: "POST", body: JSON.stringify({ fileName: file.name, base64 }),
-      });
-      toast(doc.status === "Uploaded" ? `Detected: ${doc.type}` : `Uploaded — please confirm type manually`);
-      goTo("documents");
-    } catch (e) { toast(e.message); }
+  reader.onload = () => {
+    state.pendingUpload = { fileName: file.name, base64: reader.result.split(",")[1] };
+    render();
   };
   reader.readAsDataURL(file);
+}
+
+async function confirmUpload(typeSelect, customTypeInput) {
+  if (!state.pendingUpload) return;
+  let type = typeSelect.value;
+  if (type === "Other") type = (customTypeInput.value || "Other").trim();
+  try {
+    const doc = await api(`/api/customers/${state.activeCustomer.id}/documents`, {
+      method: "POST",
+      body: JSON.stringify({ fileName: state.pendingUpload.fileName, base64: state.pendingUpload.base64, type }),
+    });
+    toast(`Saved as: ${doc.type}`);
+    state.pendingUpload = null;
+    goTo("documents");
+  } catch (e) { toast(e.message); }
+}
+
+function cancelUpload() {
+  state.pendingUpload = null;
+  render();
+}
+
+async function deleteDoc(docId) {
+  if (!confirm("Delete this document?")) return;
+  try {
+    await api(`/api/documents/${docId}`, { method: "DELETE" });
+    toast("Document deleted");
+    goTo("documents");
+  } catch (e) { toast(e.message); }
 }
 
 function custRow(c) {
   return `<div class="cust-row" onclick="goTo('details','${c.id}')">
     <div class="avatar" style="width:36px;height:36px;">${initials(c.name)}</div>
-    <div class="meta"><div class="name">${c.name}</div><div class="sub">${c.capacity} · Step ${c.step}/10</div></div>
+    <div class="meta"><div class="name">${c.name}</div><div class="sub">${c.capacity || "—"} · Step ${c.step}/10</div></div>
     ${statusBadge(c.status)}
   </div>`;
+}
+
+function docTypeOptions(selected) {
+  return state.docTypes.map((t) => `<option value="${t}" ${t === selected ? "selected" : ""}>${t}</option>`).join("");
+}
+
+function backTargetFor(screen) {
+  const map = { timeline: "details", documents: "details", add: "dashboard" };
+  return map[screen] || "dashboard";
 }
 
 function render() {
@@ -157,6 +213,7 @@ function render() {
         <div class="stat-card"><div class="num" style="color:var(--green);">${s.completed}</div><div class="lbl">Completed</div></div>
         <div class="stat-card"><div class="num" style="color:var(--blue);">${s.pending}</div><div class="lbl">Pending</div></div>
       </div>
+      <div style="padding:0 18px 6px;"><button class="btn btn-gold" style="width:100%;" onclick="goTo('add')">+ Add New Customer</button></div>
       <div class="list-block"><h4>Customers</h4>
       ${state.customers.slice(0, 6).map(custRow).join("") || `<div class="empty">No customers yet.</div>`}
       </div>`;
@@ -164,10 +221,28 @@ function render() {
 
   else if (state.screen === "customers") {
     body = `
-      <div class="app-header" style="position:static;"><h2>Customers</h2></div>
+      <div class="app-header" style="position:static;"><h2 style="flex:1;">Customers</h2><span class="back-btn" onclick="goTo('add')" title="Add Customer">＋</span></div>
       <div class="search-bar"><input placeholder="🔍 Search by name or mobile…" oninput="filterCustomers(this.value)"></div>
       <div class="list-block" id="cust-list" style="margin-top:6px;">
       ${state.customers.map(custRow).join("") || `<div class="empty">No customers found.</div>`}
+      </div>`;
+  }
+
+  else if (state.screen === "add") {
+    body = `
+      <div style="padding:16px 18px;">
+        <div class="field"><label>Full Name *</label><input id="ac-name" placeholder="Customer name"></div>
+        <div class="field"><label>Mobile Number *</label><input id="ac-mobile" placeholder="98XXXXXXXX"></div>
+        <div class="field"><label>Email</label><input id="ac-email" placeholder="customer@email.com"></div>
+        <div class="field"><label>Address</label><input id="ac-address" placeholder="Village/City, District"></div>
+        <div class="field"><label>Consumer Number</label><input id="ac-consumerNo" placeholder="MSEDCL consumer no."></div>
+        <div class="field"><label>Solar Capacity</label><input id="ac-capacity" placeholder="e.g. 3kW"></div>
+        <div class="field"><label>Customer Type</label>
+          <select id="ac-type" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;">
+            <option>Loan</option><option>Cash</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" style="width:100%;" onclick="submitAddCustomer({name:{value:document.getElementById('ac-name').value},mobile:{value:document.getElementById('ac-mobile').value},email:{value:document.getElementById('ac-email').value},address:{value:document.getElementById('ac-address').value},consumerNo:{value:document.getElementById('ac-consumerNo').value},capacity:{value:document.getElementById('ac-capacity').value},type:{value:document.getElementById('ac-type').value}})">Save Customer</button>
       </div>`;
   }
 
@@ -177,7 +252,7 @@ function render() {
       <div class="detail-hero">
         <div class="row">
           <div class="avatar" style="width:46px;height:46px;">${initials(c.name)}</div>
-          <div><div class="name">${c.name}</div><div class="sub">${c.capacity} System · ${c.type} Customer</div><div class="sub">${c.mobile} · ${c.address}</div></div>
+          <div><div class="name">${c.name}</div><div class="sub">${c.capacity || "—"} System · ${c.type} Customer</div><div class="sub">${c.mobile}${c.email ? " · " + c.email : ""}</div>${c.address ? `<div class="sub">${c.address}</div>` : ""}</div>
         </div>
         <div class="status-pill"><div><div class="l">Current Status</div><div class="v">${state.stages[c.step - 1]}</div></div>${statusBadge(c.status)}</div>
       </div>
@@ -197,13 +272,42 @@ function render() {
   }
 
   else if (state.screen === "documents") {
-    body = `
-      ${state.documents.map((d) => `<div class="doc-row"><div class="l"><div class="ic">📄</div><div>${d.type}${d.status === "Needs Confirmation" ? " <span style='color:var(--orange);font-size:10px;'>(low confidence — confirm)</span>" : ""}</div></div>${statusBadge(d.status === "Uploaded" ? "completed" : d.status === "Needs Confirmation" ? "in-progress" : "pending")}</div>`).join("") || `<div class="empty">No documents uploaded yet.</div>`}
-      <div class="fab-wrap">
-        <input type="file" id="file-input" onchange="handleUpload(this)">
-        <button class="btn btn-gold" style="width:100%;" onclick="document.getElementById('file-input').click()">+ Upload Document</button>
-        <p style="font-size:10.5px;color:var(--text-soft);margin-top:8px;text-align:center;">Filename is auto-classified (e.g. "aadhaar_xxx.jpg" → Aadhaar Card). Low-confidence matches ask for manual confirmation.</p>
-      </div>`;
+    if (state.pendingUpload) {
+      body = `
+        <div style="padding:16px 18px;">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
+            <div style="font-size:12px;color:var(--text-soft);margin-bottom:4px;">Selected file</div>
+            <div style="font-size:13px;font-weight:600;">${state.pendingUpload.fileName}</div>
+          </div>
+          <div class="field">
+            <label>What document is this?</label>
+            <select id="up-type" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;" onchange="document.getElementById('up-custom').style.display = this.value==='Other' ? 'block' : 'none';">
+              ${docTypeOptions("")}
+            </select>
+          </div>
+          <div class="field" id="up-custom" style="display:none;">
+            <label>Document name</label>
+            <input id="up-custom-name" placeholder="e.g. Electricity Board NOC">
+          </div>
+          <button class="btn btn-gold" style="width:100%;margin-bottom:8px;" onclick="confirmUpload(document.getElementById('up-type'), document.getElementById('up-custom-name'))">Save Document</button>
+          <button class="btn btn-ghost" style="width:100%;" onclick="cancelUpload()">Cancel</button>
+        </div>`;
+    } else {
+      body = `
+        ${state.documents.map((d) => `<div class="doc-row">
+          <div class="l"><div class="ic">📄</div><div><div>${d.type}</div><div style="font-size:10px;color:var(--text-soft);">${d.originalName || ""}</div></div></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <a href="${API}/api/uploads/${d.fileName}" target="_blank" style="color:var(--blue);font-size:11px;font-weight:600;">View</a>
+            <span style="color:#C0392B;cursor:pointer;font-size:14px;" onclick="deleteDoc('${d.id}')">✕</span>
+          </div>
+        </div>`).join("") || `<div class="empty">No documents uploaded yet.</div>`}
+        <div class="fab-wrap" style="display:flex;flex-direction:column;gap:8px;">
+          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;" onchange="stageFileForUpload(this)">
+          <input type="file" id="gallery-input" accept="image/*,application/pdf" style="display:none;" onchange="stageFileForUpload(this)">
+          <button class="btn btn-gold" style="width:100%;" onclick="pickFile('camera-input')">📷 Take Photo</button>
+          <button class="btn btn-navy" style="width:100%;" onclick="pickFile('gallery-input')">🖼️ Choose from Gallery</button>
+        </div>`;
+    }
   }
 
   else if (state.screen === "timeline") {
@@ -212,18 +316,19 @@ function render() {
     </div>`;
   }
 
+  const titles = { details: "Customer", documents: "Documents", timeline: "Timeline", add: "Add Customer" };
   const header = state.screen === "dashboard"
     ? `<div class="app-header"><h2 style="flex:1;">Solar Doc Manager</h2><span class="back-btn" title="Logout" onclick="logout()">⎋</span></div>`
     : state.screen === "customers"
-    ? "" // list has its own header
-    : `<div class="app-header"><span class="back-btn" onclick="goTo(state.screen==='timeline'||state.screen==='documents'?'details':'dashboard', state.activeCustomer && state.activeCustomer.id)">←</span><h2>${state.screen === "details" ? "Customer" : state.screen === "documents" ? "Documents" : "Timeline"}</h2></div>`;
+    ? ""
+    : `<div class="app-header"><span class="back-btn" onclick="goTo(backTargetFor('${state.screen}'), state.activeCustomer && state.activeCustomer.id)">←</span><h2>${titles[state.screen] || ""}</h2></div>`;
 
   el.innerHTML = `
     ${header}
     <div class="app-body">${body}</div>
     ${showNav ? `<div class="bottom-nav">
       <div class="nav-item ${state.screen === "dashboard" ? "active" : ""}" onclick="goTo('dashboard')"><div>🏠</div>Home</div>
-      <div class="nav-item ${["customers","details","documents","timeline"].includes(state.screen) ? "active" : ""}" onclick="goTo('customers')"><div>👥</div>Customers</div>
+      <div class="nav-item ${["customers","details","documents","timeline","add"].includes(state.screen) ? "active" : ""}" onclick="goTo('customers')"><div>👥</div>Customers</div>
     </div>` : ""}
   `;
 }
