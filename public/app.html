@@ -1,7 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Solar Doc Manager — App</title><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0C1E3D"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Doc Manager — App</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0C1E3D">
+<meta name="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solar Doc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
 <style>
-body{display:flex;justify-content:center}.app-wrap{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}.app-header{padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}.app-header h2{margin:0;font-size:16px;flex:1}.back-btn{width:30px;height:30px;border-radius:50%;background:#F0F2F8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}.app-body{flex:1;padding-bottom:76px}.bottom-nav{position:sticky;bottom:0;height:64px;background:var(--card);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around}.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--gray);cursor:pointer;font-weight:600}.nav-item.active{color:var(--gold)}.login-screen{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:34px 26px;background:linear-gradient(180deg,var(--navy-deep),var(--navy));color:#fff}.login-screen .mark{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#FF8A3D);display:flex;align-items:center;justify-content:center;margin-bottom:18px}.login-screen h2{margin:0 0 2px;font-size:21px}.login-screen p.sub{color:#AEB9D6;font-size:12.5px;margin:0 0 26px}.field{margin-bottom:14px}.field label{font-size:11px;color:#AEB9D6;display:block;margin-bottom:6px}.field input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2A3F70;background:#122451;color:#fff;font-size:13px}.login-err{color:#FF8A8A;font-size:12px;margin:-6px 0 12px}.demo-hint{margin-top:20px;font-size:11px;color:#8494BD;line-height:1.7}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 18px}.stat-card{background:var(--card);border-radius:12px;padding:12px 14px;border:1px solid var(--line)}.stat-card .num{font-size:20px;font-weight:700}.stat-card .lbl{font-size:10.5px;color:var(--text-soft)}.greet{padding:16px 18px 4px}.greet h2{margin:0;font-size:18px}.list-block{padding:0 18px}.list-block h4{font-size:12px;color:var(--text-soft);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em}.cust-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer}.cust-row .meta{flex:1;min-width:0}.cust-row .meta .name{font-size:13px;font-weight:600}.cust-row .meta .sub{font-size:11px;color:var(--text-soft)}.search-bar{margin:14px 18px 6px}.search-bar input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:12.5px;background:var(--card)}.detail-hero{padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line)}.detail-hero .row{display:flex;gap:12px;align-items:center}.detail-hero .name{font-size:15px;font-weight:700}.detail-hero .sub{font-size:11px;color:var(--text-soft)}.status-pill{margin-top:12px;background:#FEF1DD;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}.status-pill .l{font-size:11px;color:#946400}.status-pill .v{font-size:13px;font-weight:700;color:#946400}.stage-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12.5px}.stage-row .dot{font-weight:700;width:16px}.doc-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--line);font-size:12.5px}.doc-row .l{display:flex;align-items:center;gap:9px}.doc-row .l .ic{width:26px;height:26px;border-radius:7px;background:#EEF1F8;display:flex;align-items:center;justify-content:center;font-size:12px}.timeline{padding:16px 18px}.empty{padding:30px 18px;text-align:center;color:var(--text-soft);font-size:12.5px}.stepper-panel{margin:0 18px 4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}.fab-wrap{padding:14px 18px}
-</style></head><body><div class="app-wrap" id="app"></div><div class="toast" id="toast"></div><script src="/config.js?v=6"></script><script src="/app.js?v=6"></script><script src="/enhancements.js?v=6"></script><script src="/access.js?v=3"></script></body></html>
+  body{display:flex;justify-content:center;}
+  .app-wrap{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;}
+  .app-header{padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5;}
+  .app-header h2{margin:0;font-size:16px;flex:1;}
+  .back-btn{width:30px;height:30px;border-radius:50%;background:#F0F2F8;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
+  .app-body{flex:1;padding-bottom:76px;}
+  .bottom-nav{position:sticky;bottom:0;height:64px;background:var(--card);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--gray);cursor:pointer;font-weight:600;}
+  .nav-item.active{color:var(--gold);}
+  .login-screen{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:34px 26px;background:linear-gradient(180deg,var(--navy-deep),var(--navy));color:#fff;}
+  .login-screen .mark{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#FF8A3D);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  .login-screen h2{margin:0 0 2px;font-size:21px;}
+  .login-screen p.sub{color:#AEB9D6;font-size:12.5px;margin:0 0 26px;}
+  .field{margin-bottom:14px;}
+  .field label{font-size:11px;color:#AEB9D6;display:block;margin-bottom:6px;}
+  .field input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2A3F70;background:#122451;color:#fff;font-size:13px;}
+  .login-err{color:#FF8A8A;font-size:12px;margin:-6px 0 12px;}
+  .demo-hint{margin-top:20px;font-size:11px;color:#8494BD;line-height:1.7;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 18px;}
+  .stat-card{background:var(--card);border-radius:12px;padding:12px 14px;border:1px solid var(--line);}
+  .stat-card .num{font-size:20px;font-weight:700;}
+  .stat-card .lbl{font-size:10.5px;color:var(--text-soft);}
+  .greet{padding:16px 18px 4px;}.greet h2{margin:0;font-size:18px;}
+  .list-block{padding:0 18px;}.list-block h4{font-size:12px;color:var(--text-soft);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em;}
+  .cust-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;cursor:pointer;}
+  .cust-row .avatar{width:36px;height:36px;font-size:13px;}.cust-row .meta{flex:1;min-width:0;}.cust-row .meta .name{font-size:13px;font-weight:600;}.cust-row .meta .sub{font-size:11px;color:var(--text-soft);}
+  .search-bar{margin:14px 18px 6px;}.search-bar input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:12.5px;background:var(--card);}
+  .detail-hero{padding:16px 18px;background:var(--card);border-bottom:1px solid var(--line);}.detail-hero .row{display:flex;gap:12px;align-items:center;}.detail-hero .avatar{width:46px;height:46px;font-size:15px;}.detail-hero .name{font-size:15px;font-weight:700;}.detail-hero .sub{font-size:11px;color:var(--text-soft);}
+  .status-pill{margin-top:12px;background:#FEF1DD;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;}.status-pill .l{font-size:11px;color:#946400;}.status-pill .v{font-size:13px;font-weight:700;color:#946400;}
+  .stage-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12.5px;}.stage-row .dot{font-weight:700;width:16px;}
+  .doc-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--line);font-size:12.5px;}.doc-row .l{display:flex;align-items:center;gap:9px;}.doc-row .l .ic{width:26px;height:26px;border-radius:7px;background:#EEF1F8;display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .timeline{padding:16px 18px;}.tl-item{display:flex;gap:12px;padding-bottom:20px;position:relative;}.tl-item::before{content:"";position:absolute;left:5px;top:16px;bottom:0;width:1.5px;background:var(--line);}.tl-item:last-child::before{display:none;}.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:3px;}.tl-item .date{font-size:10px;color:var(--text-soft);}.tl-item .ttl{font-size:12.5px;font-weight:600;margin-top:1px;}
+  .fab-wrap{padding:14px 18px;}.stepper-panel{margin:0 18px 4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}.empty{padding:30px 18px;text-align:center;color:var(--text-soft);font-size:12.5px;}.spinner{padding:30px;text-align:center;color:var(--text-soft);font-size:12.5px;}#file-input{display:none;}
+</style>
+</head>
+<body>
+<div class="app-wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+<script src="/config.js"></script>
+<script src="/app.js"></script>
+<script>
+// Mobile app uses the original password login only. No account-approval flow.
+(function(){
+  function cleanLogin(){
+    document.querySelectorAll('button').forEach(function(b){
+      if ((b.textContent||'').toLowerCase().includes('create new account')) b.remove();
+    });
+    var hint=document.querySelector('.demo-hint');
+    if(hint) hint.innerHTML='Demo admin: 9000000001 / admin123<br>Demo staff: 9000000002 / staff123';
+  }
+  new MutationObserver(cleanLogin).observe(document.body,{childList:true,subtree:true});
+  setTimeout(cleanLogin,0);
+})();
+</script>
+</body>
+</html>
